@@ -5,10 +5,10 @@ from sliver import SliverClientConfig
 from config_selector_ui import selectConfig
 from client_ui import launchClient
 from argparse import ArgumentParser
+import ttkbootstrap as ttk
 
 formatter = "[%(levelname)s] %(message)s"
 log = logging.getLogger(__name__)
-
 
 def fetch_configs(CONFIG_DIR):
     configs = {}  # name, path
@@ -36,6 +36,8 @@ def main(args):
     else:
         logging.basicConfig(level=logging.INFO, format=formatter)
 
+    app = ttk.Window(themename="darkly")
+    app.withdraw()
     # User has not specified a specific config to use
     if not args.config:
         CONFIG_DIR = args.config_path
@@ -57,7 +59,7 @@ def main(args):
 
         # Multiple configs found by autodetect - ask the user
         else:
-            config_name = selectConfig(configs)
+            config_name = selectConfig(app, configs)
 
         if config_name:
             log.debug(f"Selected config {config_name}")
@@ -73,7 +75,7 @@ def main(args):
             log.critical("Failed to load custom config file")
             exit()
 
-    asyncio.run(launchClient(log, config))
+    asyncio.run(launchClient(app, log, config))
 
 
 if __name__ == "__main__":
