@@ -63,7 +63,7 @@ def main(args):
             log.debug(f"Selected config {config_name}")
             config = configs[config_name]
         else:
-            log.info("User aborted config selection")
+            log.debug("User aborted config selection")
             exit()
 
     else:
