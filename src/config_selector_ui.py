@@ -1,56 +1,33 @@
-from PyQt5.QtWidgets import (
-    QComboBox,
-    QMainWindow,
-    QApplication,
-    QWidget,
-    QGridLayout,
-    QPushButton,
-)
-from PyQt5.QtGui import QIcon
+import ttkbootstrap as ttk
 
-
-class ConfigSelector(QMainWindow):
+class ConfigSelector():
     def __init__(self, configs):
-        super().__init__()
+        self.selection = None
+        self.root = ttk.Window(themename="darkly")
+        options = list(configs.keys())
+        options = [options[0]] + options # Set default to first in list
+        self.config_name = ttk.StringVar()
 
-        self.setWindowTitle("Select config")
+        frame = ttk.Frame(self.root, width=200, height=400)
+        frame.grid(row=0, column=0, padx=10, pady=5)
 
-        self.selector = QComboBox()
+        self.dropDown = ttk.OptionMenu(frame, self.config_name, *options).grid(row=0, column=0, columnspan=2)
+        cancelButton = ttk.Button(frame, text="Cancel", command = self._cancel).grid(row=1, column=0)
+        selectbutton = ttk.Button(frame, text="Select", command = self._select).grid(row=1, column=1)
 
-        confirm = QPushButton("Select")
-        confirm.clicked.connect(self.makeSelection)
+        frame.pack()
+        
+        self.root.mainloop()
 
-        cancel = QPushButton("Cancel")
-        cancel.clicked.connect(self.closeWindow)
+    def _select(self):
+        print(self.config_name.get())
+        self.root.destroy()
 
-        for config_name in configs.keys():
-            self.selector.addItem(config_name)
-
-        layout = QGridLayout()
-
-        layout.addWidget(self.selector, 0, 0, 0, 2)
-        layout.addWidget(cancel, 1, 0)
-        layout.addWidget(confirm, 1, 1)
-
-        container = QWidget()
-        container.setLayout(layout)
-
-        self.setCentralWidget(container)
-
-    def makeSelection(self, _):
-        # print(self.selector.currentText()) # Config chosen
-        self.close()
-
-    def closeWindow(self, _):
-        self.selector.clear()
-        self.close()
-
+    def _cancel(self):
+        self.config_name.set(None)
+        self.root.destroy()
 
 def selectConfig(configs):
-    app = QApplication([])
-    configSelector = ConfigSelector(configs)
-    configSelector.show()
-    app.exec_()
-
+    config_name = ConfigSelector(configs).config_name.get()
     # Return the item that was selected when the app was closed
-    return configSelector.selector.currentText()
+    return config_name

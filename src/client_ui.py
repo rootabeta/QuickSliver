@@ -1,9 +1,7 @@
-from PyQt5.QtWidgets import QMainWindow, QApplication
 import asyncio
 from sliver import SliverClient
 
-
-class ClientWindow(QMainWindow):
+class ClientWindow():
     def __init__(self, config, client):
         super().__init__()
 
@@ -11,17 +9,6 @@ class ClientWindow(QMainWindow):
         self.operator = config.operator
 
         self.client = client
-
-        self.buildUI()
-
-        # The 100s are magic numbers :P
-        self.setGeometry(100, 100, 1000, 700)
-
-        self.show()
-
-    def buildUI(self):
-        # Set window title
-        self.setWindowTitle(f"QuickSliver -> {self.operator}@{self.teamserver[0]} ")
 
 
 async def launchClient(log, config):
@@ -41,7 +28,3 @@ async def launchClient(log, config):
     log.debug(
         "{} beacons and {} sessions connected".format(len(beacons), len(sessions))
     )
-
-    app = QApplication([])
-    window = ClientWindow(config, client)
-    app.exec_()
