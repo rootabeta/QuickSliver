@@ -1,0 +1,10 @@
+grpcio==1.64.0
+grpcio-tools==1.64.0
+mypy-protobuf==3.3.0
+protobuf==5.26.1
+PyQt5==5.15.10
+PyQt5-Qt5==5.15.2
+PyQt5-sip==12.13.0
+setuptools==69.5.1
+sliver-py==0.0.19
+types-protobuf==5.26.0.20240422
