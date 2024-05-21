@@ -2,7 +2,6 @@ import asyncio
 from sliver import SliverClient
 import ttkbootstrap as ttk
 import random
-import tk_async_execute as tae
 import threading
 
 FETCH_RATE = 5 # Fetch fresh data from the server every X seconds to prevent drift
