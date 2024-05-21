@@ -3,7 +3,7 @@ import asyncio
 import logging
 from sliver import SliverClientConfig
 from config_selector_ui import selectConfig
-from client_ui import ClientWindow #launchClient
+from client_ui import launchClient
 from argparse import ArgumentParser
 import ttkbootstrap as ttk
 from PIL import Image, ImageTk
@@ -88,7 +88,7 @@ def main(args):
             exit()
 
     #launchClient(app, log, config)
-    client = ClientWindow(app, log, config)
+    client = launchClient(app, log, config)
 
 
 if __name__ == "__main__":
