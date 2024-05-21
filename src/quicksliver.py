@@ -3,7 +3,7 @@ import asyncio
 import logging
 from sliver import SliverClientConfig
 from config_selector_ui import selectConfig
-from client_ui import launchClient
+from client_ui import ClientWindow #launchClient
 from argparse import ArgumentParser
 import ttkbootstrap as ttk
 
@@ -75,7 +75,8 @@ def main(args):
             log.critical("Failed to load custom config file")
             exit()
 
-    asyncio.run(launchClient(app, log, config))
+    #launchClient(app, log, config)
+    client = ClientWindow(app, log, config)
 
 
 if __name__ == "__main__":
