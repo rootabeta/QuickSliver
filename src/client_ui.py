@@ -11,21 +11,22 @@ REFRESH_RATE = int(
 
 
 class ClientWindow(ttk.Frame):
-    def __init__(self, app, loops, log, config):  # , client):
+    def __init__(self, app, log, config):  # , client):
         super().__init__(app)
 
         # Server event processing should happen on its own dedicated asyncloop
         # This prevents server event floods from consuming GUI events and vice-versa
-        self.guiLoop, self.serverLoop = loops
         self.log = log
 
         # Initialize window
         self.root = app
 
-        self.server = ServerSession(config, log, self.serverLoop)
+        self.server = ServerSession(config, log)
         if not self.server.client:
-            console.critical("Failed to establish connection to teamserver")
+            self.log.critical("Failed to establish connection to teamserver")
             self._quit()
+
+        self.server_events = []
 
         # Add UI elements
         self._buildUI()
@@ -63,21 +64,28 @@ class ClientWindow(ttk.Frame):
     # This is done at the configured frame rate (30fps at time of writing) to redraw
     # the entire GUI in "real time" using information from the serversession as-needed
     def redraw(self):
+        self.server_events += self.server.fetchEvents()
+
+        # Placeholder, show me real time events from server
         self.connections.config(
             text=f"{len(self.server.beacons)} beacons | {len(self.server.sessions)} sessions"
         )
-        self.label.config(
-            text=self.server.testValue
-        )  # Test for GUI->client->server->client->GUI round-trip
+
+        if self.server_events:
+            self.label.config(
+                text=self.server_events[0]
+            )
+
         self.after(
             REFRESH_RATE, self.redraw
         )  # Redraw window after however many ms we need to maintain the framerate
+
+        self.server_events = []
 
     # Called whenever we need to bail out of the GUI for any reason
     # It does all our clean shutdown stuff
     def _quit(self):
         # Shut down event processing
-        self.guiLoop.call_soon_threadsafe(self.guiLoop.stop)
         self.server.shutdown()
 
         # Shut down main window
@@ -86,30 +94,10 @@ class ClientWindow(ttk.Frame):
         # Shut down program itself
         exit()
 
-
-# Super simple event loop processor - just run threads for async stuff forever
-def run_loop(loop):
-    asyncio.set_event_loop(loop)
-    loop.run_forever()
-
-
 def launchClient(app, log, config):
     log.info(
         f"Establishing connection to {config.lhost}:{config.lport} as {config.operator}"
     )
 
-    # Launch a seperate process to handle asyncio events
-    GUI_loop = asyncio.new_event_loop()
-    Server_loop = asyncio.new_event_loop()
-
-    tGUI_loop = threading.Thread(target=run_loop, args=(GUI_loop,))
-    tServer_loop = threading.Thread(target=run_loop, args=(Server_loop,))
-
-    tGUI_loop.start()
-    tServer_loop.start()
-
-    client = ClientWindow(app, (GUI_loop, Server_loop), log, config)
+    client = ClientWindow(app, log, config)
     client.mainloop()  # Launch client app
-
-    tGUI_loop.join()
-    tServer_loop.join()
