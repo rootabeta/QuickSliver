@@ -3,13 +3,14 @@ import asyncio
 import logging
 from sliver import SliverClientConfig
 from config_selector_ui import selectConfig
-from client_ui import ClientWindow #launchClient
+from client_ui import launchClient
 from argparse import ArgumentParser
 import ttkbootstrap as ttk
 from PIL import Image, ImageTk
 
 formatter = "[%(levelname)s] %(message)s"
 log = logging.getLogger(__name__)
+
 
 def fetch_configs(CONFIG_DIR):
     configs = {}  # name, path
@@ -38,18 +39,20 @@ def main(args):
         logging.basicConfig(level=logging.INFO, format=formatter)
 
     app = ttk.Window(themename="darkly")
-    
+
     # Get absolute path of currently-executing file, so cwd of invoking script is irrelevant
     dirname, _ = os.path.split(os.path.abspath(__file__))
-    
+
     # Backtrack into img to fetch icon
     ico = Image.open(os.path.join(dirname, "..", "img", "QuickSliver.png"))
-    
+
     # Set program icon
     photo = ImageTk.PhotoImage(ico)
     app.wm_iconphoto(False, photo)
 
+    # Hide and wait in the background for config info to come
     app.withdraw()
+
     # User has not specified a specific config to use
     if not args.config:
         CONFIG_DIR = args.config_path
@@ -87,8 +90,8 @@ def main(args):
             log.critical("Failed to load custom config file")
             exit()
 
-    #launchClient(app, log, config)
-    client = ClientWindow(app, log, config)
+    # launchClient(app, log, config)
+    client = launchClient(app, log, config)
 
 
 if __name__ == "__main__":
