@@ -3,96 +3,66 @@ from sliver import SliverClient
 import ttkbootstrap as ttk
 import random
 import threading
+from server_session import ServerSession
 
-FETCH_RATE = 5 # Fetch fresh data from the server every X seconds to prevent drift
 REFRESH_RATE = int(1000 / 30) # Refresh every X ms - should reach frame rate of approx 30fps
 
-class State:
-    beacons = 0
-    sessions = 0
-
 class ClientWindow(ttk.Frame):
-    def __init__(self, app, loop, log, config): #, client):
+    def __init__(self, app, loops, log, config): #, client):
         super().__init__(app)
 
-        self.variables = {
-            "labelValue": "Placeholder"
-        }
-
-        # Track variables
-        self.loop = loop
+        # Server event processing should happen on its own dedicated asyncloop
+        # This prevents server event floods from consuming GUI events and vice-versa
+        self.guiLoop, self.serverLoop = loops
         self.log = log
-        self.teamserver = (config.lhost, config.lport)
-        self.operator = config.operator
 
         # Initialize window
         self.root = app
+        
+        self.server = ServerSession(config, log, self.serverLoop)
+        if not self.server.client:
+            console.critical("Failed to establish connection to teamserver")
+            self._quit()
 
-        self.label = ttk.Label(text="0")
+        # Add UI elements
+        self._buildUI()
 
-        # Open teamserver connection
-        asyncio.run_coroutine_threadsafe(self._connectClient(config), self.loop)
-
-        ttk.Button(self.root, text="Do a thing", command=self.do_thing).pack()
-        ttk.Button(self.root, text="Exit", command=self._quit).pack()
-
-        self.label.pack() # Add label to UI
-
-        self.refresh() # Initialize our local state
-        self.redraw() # Prepare to start drawing stuff to screen
-        self.log.debug("Client UI window opened")
-
-    async def _do_thing(self):
-        beacons = await self.client.beacons()
-        print(f"We have {len(beacons)} beacons")
-        return len(beacons)
-
-    def do_thing(self):
-        asyncio.run_coroutine_threadsafe(self._do_thing(), self.loop)
-
-    async def _asyncCounts(self):
-        numBeacons = len(await self.client.beacons())
-        numSessions = len(await self.client.sessions())
-        string = f"{numBeacons} beacons | {numSessions} sessions"
-        self.variables["labelValue"] = string
-
-    def _getCounts(self):
-        countFuture = asyncio.run_coroutine_threadsafe(self._asyncCounts(), self.loop)
-
-    def refresh(self):
-        self._getCounts()
-        self.after(FETCH_RATE * 1000, self.refresh)
-
-    def redraw(self):
-        self.label.config(text=self.variables.get("labelValue"))
-        self.after(REFRESH_RATE, self.redraw)
-
-    # Connect to the teamserver and propogate values to window
-    async def _connectClient(self, config):
-        # Parse config file and connect to teamserver
-        self.client = SliverClient(config)
-        try:
-            await self.client.connect()
-        except:
-            self.log.critical("Failed to connect to teamserver")
-            exit()
-
-        # Log success
-        self.log.info("Connected to teamserver")
-
-        # Set title
-        self.root.title(f"QuickSliver -> {self.operator}@{self.teamserver[0]}")
-
-        # Unhide window after successful connection
+        # Finalize GUI now that we're ready to show it to the user
+        self.root.title(f"QuickSliver -> {self.server.operator}@{self.server.teamserver}")
         self.root.deiconify()
-        # Set window size
         self.root.geometry("1000x700")
 
+        self._redraw() # Prepare to start drawing stuff to screen
+        self.log.debug("Client UI window opened")
+
+    # Skeleton of the UI - packed into its own function for convenience
+    def _buildUI(self):
+        self.label = ttk.Label(text="0")
+        ttk.Button(self.root, text="Don't click me >:(", command=self.server.do_thing).pack()
+        ttk.Button(self.root, text="Get connection counts", command=self.server.test_connection).pack()
+        ttk.Button(self.root, text="Exit", command=self._quit).pack()
+        self.label.pack() # Add label to UI
+
+
+    # Update the window with fresh data from self.server
+    def _redraw(self):
+        self.label.config(text=self.server.testValue) # For debugging/PoC
+        self.after(REFRESH_RATE, self._redraw)
+
+    # Called whenever we need to bail out of the GUI for any reason
+    # It does all our clean shutdown stuff
     def _quit(self):
-        self.loop.call_soon_threadsafe(self.loop.stop)
+        # Shut down event processing
+        self.guiLoop.call_soon_threadsafe(self.guiLoop.stop)
+        self.server.shutdown()
+
+        # Shut down main window
         self.destroy()
+
+        # Shut down program itself
         exit()
 
+# Super simple event loop processor - just run threads for async stuff forever
 def run_loop(loop):
     asyncio.set_event_loop(loop)
     loop.run_forever()
@@ -103,11 +73,17 @@ def launchClient(app, log, config):
     )
 
     # Launch a seperate process to handle asyncio events
-    loop = asyncio.new_event_loop()
-    loop_thread = threading.Thread(target=run_loop, args=(loop,))
-    loop_thread.start()
+    GUI_loop = asyncio.new_event_loop()
+    Server_loop = asyncio.new_event_loop()
 
-    client = ClientWindow(app, loop, log, config)
-    client.mainloop()
+    tGUI_loop = threading.Thread(target=run_loop, args=(GUI_loop,))
+    tServer_loop = threading.Thread(target=run_loop, args=(Server_loop,))
 
-    loop_thread.join()
+    tGUI_loop.start()
+    tServer_loop.start()
+
+    client = ClientWindow(app, (GUI_loop, Server_loop), log, config)
+    client.mainloop() # Launch client app
+
+    tGUI_loop.join()
+    tServer_loop.join()

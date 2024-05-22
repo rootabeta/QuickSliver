@@ -48,8 +48,10 @@ def main(args):
     # Set program icon
     photo = ImageTk.PhotoImage(ico)
     app.wm_iconphoto(False, photo)
-
+    
+    # Hide and wait in the background for config info to come
     app.withdraw()
+
     # User has not specified a specific config to use
     if not args.config:
         CONFIG_DIR = args.config_path
