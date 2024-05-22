@@ -1,14 +1,15 @@
 import asyncio
 from sliver import SliverClient
 
+
 # Wrapper to tell the server to do stuff and hang onto results
-class ServerSession():
+class ServerSession:
     def __init__(self, config, log, loop):
         self.config = config
         self.log = log
         self.loop = loop
 
-        # Initialize connection to teamserver ASAP 
+        # Initialize connection to teamserver ASAP
         self._runAsync(self._connectClient)
 
         # Log success
@@ -18,7 +19,7 @@ class ServerSession():
         self.teamserver = self.config.lhost
 
         # For debugging
-        self.testValue = "Hello from the server!" 
+        self.testValue = "Hello from the server!"
 
         # Reflect server states
         self.beacons = []
@@ -46,7 +47,9 @@ class ServerSession():
     # Results can be ignored or fetched by invoking .fetch() on the returned object
     # Example usage, self._runAsync(self._doStuff, stuffParams)
     def _runAsync(self, function, *args, **kwargs):
-        return asyncio.run_coroutine_threadsafe(function(*args, **kwargs), self.loop).result()
+        return asyncio.run_coroutine_threadsafe(
+            function(*args, **kwargs), self.loop
+        ).result()
 
     # Connect to the teamserver and propogate values to window
     async def _connectClient(self):

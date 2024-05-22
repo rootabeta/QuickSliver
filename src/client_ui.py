@@ -5,10 +5,13 @@ import random
 import threading
 from server_session import ServerSession
 
-REFRESH_RATE = int(1000 / 30) # Refresh every X ms - should reach frame rate of approx 30fps
+REFRESH_RATE = int(
+    1000 / 30
+)  # Refresh every X ms - should reach frame rate of approx 30fps
+
 
 class ClientWindow(ttk.Frame):
-    def __init__(self, app, loops, log, config): #, client):
+    def __init__(self, app, loops, log, config):  # , client):
         super().__init__(app)
 
         # Server event processing should happen on its own dedicated asyncloop
@@ -18,7 +21,7 @@ class ClientWindow(ttk.Frame):
 
         # Initialize window
         self.root = app
-        
+
         self.server = ServerSession(config, log, self.serverLoop)
         if not self.server.client:
             console.critical("Failed to establish connection to teamserver")
@@ -28,11 +31,13 @@ class ClientWindow(ttk.Frame):
         self._buildUI()
 
         # Finalize GUI now that we're ready to show it to the user
-        self.root.title(f"QuickSliver -> {self.server.operator}@{self.server.teamserver}")
+        self.root.title(
+            f"QuickSliver -> {self.server.operator}@{self.server.teamserver}"
+        )
         self.root.deiconify()
         self.root.geometry("1000x700")
 
-        self.redraw() # Prepare to start drawing stuff to screen
+        self.redraw()  # Prepare to start drawing stuff to screen
         self.log.debug("Client UI window opened")
 
     # Skeleton of the UI - packed into its own function for convenience
@@ -42,10 +47,14 @@ class ClientWindow(ttk.Frame):
         self.connections = ttk.Label(text="")
         self.connections.pack()
 
-        ttk.Button(self.root, text="Don't click me >:(", command=self.server.do_thing).pack()
-        ttk.Button(self.root, text="Get connection counts", command=self.server.test_connection).pack()
+        ttk.Button(
+            self.root, text="Don't click me >:(", command=self.server.do_thing
+        ).pack()
+        ttk.Button(
+            self.root, text="Get connection counts", command=self.server.test_connection
+        ).pack()
         ttk.Button(self.root, text="Exit", command=self._quit).pack()
-        self.label.pack() # Add label to UI
+        self.label.pack()  # Add label to UI
 
     # Update the window with fresh data from self.server
     # Only responsible for calling the redraw() methods of its direct descendants
@@ -54,9 +63,15 @@ class ClientWindow(ttk.Frame):
     # This is done at the configured frame rate (30fps at time of writing) to redraw
     # the entire GUI in "real time" using information from the serversession as-needed
     def redraw(self):
-        self.connections.config(text=f"{len(self.server.beacons)} beacons | {len(self.server.sessions)} sessions")
-        self.label.config(text=self.server.testValue) # Test for GUI->client->server->client->GUI round-trip
-        self.after(REFRESH_RATE, self.redraw) # Redraw window after however many ms we need to maintain the framerate
+        self.connections.config(
+            text=f"{len(self.server.beacons)} beacons | {len(self.server.sessions)} sessions"
+        )
+        self.label.config(
+            text=self.server.testValue
+        )  # Test for GUI->client->server->client->GUI round-trip
+        self.after(
+            REFRESH_RATE, self.redraw
+        )  # Redraw window after however many ms we need to maintain the framerate
 
     # Called whenever we need to bail out of the GUI for any reason
     # It does all our clean shutdown stuff
@@ -71,10 +86,12 @@ class ClientWindow(ttk.Frame):
         # Shut down program itself
         exit()
 
+
 # Super simple event loop processor - just run threads for async stuff forever
 def run_loop(loop):
     asyncio.set_event_loop(loop)
     loop.run_forever()
+
 
 def launchClient(app, log, config):
     log.info(
@@ -92,7 +109,7 @@ def launchClient(app, log, config):
     tServer_loop.start()
 
     client = ClientWindow(app, (GUI_loop, Server_loop), log, config)
-    client.mainloop() # Launch client app
+    client.mainloop()  # Launch client app
 
     tGUI_loop.join()
     tServer_loop.join()
