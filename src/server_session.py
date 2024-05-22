@@ -36,7 +36,7 @@ class ServerSession():
     def test_connection(self):
         self.log.debug("Fetching counts from server")
         self._runAsync(self._updateConnections)
-        self.testValue = f"{len(self.beacons)} beacons | {len(self.sessions)} sessions"
+        self.testValue = f"{len(self.beacons) + len(self.sessions)} agents"
 
     def do_thing(self):
         self.log.debug(f"Someone clicked me! I'm telling mom!")

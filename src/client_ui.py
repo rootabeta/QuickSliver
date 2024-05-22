@@ -32,22 +32,31 @@ class ClientWindow(ttk.Frame):
         self.root.deiconify()
         self.root.geometry("1000x700")
 
-        self._redraw() # Prepare to start drawing stuff to screen
+        self.redraw() # Prepare to start drawing stuff to screen
         self.log.debug("Client UI window opened")
 
     # Skeleton of the UI - packed into its own function for convenience
     def _buildUI(self):
         self.label = ttk.Label(text="0")
+
+        self.connections = ttk.Label(text="")
+        self.connections.pack()
+
         ttk.Button(self.root, text="Don't click me >:(", command=self.server.do_thing).pack()
         ttk.Button(self.root, text="Get connection counts", command=self.server.test_connection).pack()
         ttk.Button(self.root, text="Exit", command=self._quit).pack()
         self.label.pack() # Add label to UI
 
-
     # Update the window with fresh data from self.server
-    def _redraw(self):
-        self.label.config(text=self.server.testValue) # For debugging/PoC
-        self.after(REFRESH_RATE, self._redraw)
+    # Only responsible for calling the redraw() methods of its direct descendants
+    # Those will, in turn, call their descendants recursively
+    # This means invoking this one top-level function will update the entire GUI at once
+    # This is done at the configured frame rate (30fps at time of writing) to redraw
+    # the entire GUI in "real time" using information from the serversession as-needed
+    def redraw(self):
+        self.connections.config(text=f"{len(self.server.beacons)} beacons | {len(self.server.sessions)} sessions")
+        self.label.config(text=self.server.testValue) # Test for GUI->client->server->client->GUI round-trip
+        self.after(REFRESH_RATE, self.redraw) # Redraw window after however many ms we need to maintain the framerate
 
     # Called whenever we need to bail out of the GUI for any reason
     # It does all our clean shutdown stuff
