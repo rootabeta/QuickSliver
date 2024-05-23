@@ -117,8 +117,9 @@ class ClientWindow(ttk.Frame):
         self.server_events += self.server.events
         self.server.events = []  # Clear out event queue after fetching
 
+        # TODO - We don't want to add new tabs for EVERYTHING
+        # But it's a nice PoC
         for event in self.server_events:
-            self.log.info(event)
             self._addTab(str(event), event.EventType)
 
         # Your UI redrawing code goes here
