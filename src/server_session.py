@@ -2,6 +2,7 @@ import asyncio
 from sliver import SliverClient
 import threading
 
+
 # Wrapper to tell the server to do stuff and hang onto results
 class ServerSession:
     def __init__(self, config, log):
@@ -29,7 +30,7 @@ class ServerSession:
 
         # For debugging
         self.testValue = "Hello from the server!"
-        
+
         # Launch event handler
         asyncio.run_coroutine_threadsafe(self._handleEvents(), self.loop)
 
@@ -91,6 +92,7 @@ class ServerSession:
 
         # Shut down threads that handle the loop for server comms
         self.loopThread.join()
+
 
 def run_loop(loop):
     asyncio.set_event_loop(loop)

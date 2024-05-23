@@ -10,6 +10,7 @@ REFRESH_RATE = int(
     1000 / 30
 )  # Refresh every X ms - should reach frame rate of approx 30fps
 
+
 class ClientWindow(ttk.Frame):
     def __init__(self, app, log, config):  # , client):
         super().__init__(app)
@@ -50,7 +51,7 @@ class ClientWindow(ttk.Frame):
     # Build the menu at the top of the screen
     def _buildMenuBar(self):
         # Build main menu bar
-        menuBar = ttk.Menu(self.root, tearoff=0) 
+        menuBar = ttk.Menu(self.root, tearoff=0)
 
         # Create sub-menus
         clientOptions = ttk.Menu(menuBar, tearoff=0)
@@ -63,8 +64,8 @@ class ClientWindow(ttk.Frame):
         armoryOptions.add_command(label="Search", command=self._TODO)
 
         # Options for the client only
-        clientOptions.add_cascade(label='Armory', menu=armoryOptions)
-        clientOptions.add_command(label='Exit', command=self._quit)
+        clientOptions.add_cascade(label="Armory", menu=armoryOptions)
+        clientOptions.add_command(label="Exit", command=self._quit)
 
         # Create a new profile, etc.
         newMenu.add_command(label="Listener")
@@ -86,8 +87,8 @@ class ClientWindow(ttk.Frame):
         menuBar.add_cascade(label="New", menu=newMenu)
         menuBar.add_cascade(label="View", menu=viewMenu)
 
-        self.root.config(menu = menuBar)
-    
+        self.root.config(menu=menuBar)
+
     def _addTab(self, body="Custom tab! Woo!", title="Tab added at runtime!"):
         tab = Tab(self.tabPanel.notebook, body)
         self.tabPanel.addTab(tab, title)
@@ -99,7 +100,7 @@ class ClientWindow(ttk.Frame):
 
         self.networkGraph = NetworkGraph(self.root, self.server)
         self.networkGraph.grid()
-        
+
         self.tabPanel = TabPanel(self.root, self.server)
         self.tabPanel.grid()
 
@@ -114,7 +115,7 @@ class ClientWindow(ttk.Frame):
     # the entire GUI in "real time" using information from the serversession as-needed
     def redraw(self):
         self.server_events += self.server.events
-        self.server.events = [] # Clear out event queue after fetching
+        self.server.events = []  # Clear out event queue after fetching
 
         for event in self.server_events:
             self.log.info(event)
@@ -139,6 +140,7 @@ class ClientWindow(ttk.Frame):
 
         # Shut down program itself
         exit()
+
 
 def launchClient(app, log, config):
     log.info(
