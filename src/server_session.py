@@ -37,31 +37,25 @@ class ServerSession:
     def test_connection(self):
         self.log.debug("Fetching counts from server")
         self._runAsync(self._updateConnections)
-        self.testValue = f"{len(self.beacons) + len(self.sessions)} agents"
+        self.log.debug(f"{len(self.beacons) + len(self.sessions)} agents")
 
     # Quick skeleton test to respond to a click. Simple as it gets.
     def do_thing(self):
         self.log.debug(f"Someone clicked me! I'm telling mom!")
         self.testValue = "Hey, you clicked me >:c"
 
-    # Get a list of the events that have occured since we last checked
-    def fetchEvents(self):
-#        self._runAsync(self._handleEvents) # Grab any new events
-        newEvents = self.events # Store the events list
-        self.events = [] # Empty events list
-        return newEvents
-
     # Continually fetch events from the server
     async def _handleEvents(self):
+        self.log.debug("Handling events")
         async for event in self.client.events():
             self.events.append(event)
             match event.EventType:
                 case "job-started":
-                    self.log.info("Job started")
+                    self.log.debug("Job started")
                 case "job-stopped":
-                    self.log.info("Job stopped")
+                    self.log.debug("Job stopped")
                 case _:
-                    self.log.info(f"Unrecognized event: {event.EventType}")
+                    self.log.warn(f"Unrecognized event: {event.EventType}")
 
     # Easy wrapper to run arbitrary functions from sync runtime
     # Results can be ignored or fetched by invoking .fetch() on the returned object

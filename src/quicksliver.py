@@ -50,6 +50,10 @@ def main(args):
     photo = ImageTk.PhotoImage(ico)
     app.wm_iconphoto(False, photo)
 
+    # Set the grid sizes
+    app.grid_rowconfigure(1, weight=1)
+    app.grid_columnconfigure(0, weight=1)
+
     # Hide and wait in the background for config info to come
     app.withdraw()
 
