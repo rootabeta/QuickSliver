@@ -110,10 +110,12 @@ class ClientWindow(ttk.Frame):
         self.mainWindow.pack(expand=True, fill='both')
 
         # Network graph of compromised hosts
-        self.networkPanel = ttk.Label(self.mainWindow, text="NETWORK PANEL GOES HERE")
+        #self.networkPanel = ttk.Label(self.mainWindow, text="NETWORK PANEL GOES HERE")
+        self.networkPanel = NetworkGraph(self.mainWindow, self.server)
 
         # List of tabs for loot, listeners, implants, etc.
-        self.tabPanel = ttk.Label(self.mainWindow, text="TAB PANEL GOES HERE")
+        #self.tabPanel = ttk.Label(self.mainWindow, text="TAB PANEL GOES HERE")
+        self.tabPanel = TabPanel(self.mainWindow, self.server)
 
         self.mainWindow.add(self.networkPanel)
         self.mainWindow.add(self.tabPanel)
