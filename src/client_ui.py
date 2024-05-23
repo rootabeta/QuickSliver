@@ -4,11 +4,11 @@ import ttkbootstrap as ttk
 import random
 import threading
 from server_session import ServerSession
+from ui_components import *
 
 REFRESH_RATE = int(
     1000 / 30
 )  # Refresh every X ms - should reach frame rate of approx 30fps
-
 
 class ClientWindow(ttk.Frame):
     def __init__(self, app, log, config):  # , client):
@@ -26,7 +26,12 @@ class ClientWindow(ttk.Frame):
             self.log.critical("Failed to establish connection to teamserver")
             self._quit()
 
+        self.root.protocol("WM_DELETE_WINDOW", self._quit)
+
         self.server_events = []
+        # The server_console window is always open for events and such
+        # However, we can have other tabs like for each client
+        self.optional_windows = [] 
 
         # Add UI elements
         self._buildUI()
@@ -41,21 +46,54 @@ class ClientWindow(ttk.Frame):
         self.redraw()  # Prepare to start drawing stuff to screen
         self.log.debug("Client UI window opened")
 
+    # Build the menu at the top of the screen
+    def _buildMenuBar(self):
+        # Build main menu bar
+        menuBar = ttk.Menu(self.root, tearoff=0) 
+
+        # Create sub-menus
+        clientOptions = ttk.Menu(menuBar, tearoff=0)
+        newMenu = ttk.Menu(menuBar, tearoff=0)
+        viewMenu = ttk.Menu(menuBar, tearoff=0)
+
+        # Armory options
+        armoryOptions = ttk.Menu(clientOptions, tearoff=0)
+        armoryOptions.add_command(label="Refresh")
+        armoryOptions.add_command(label="Search")
+
+        # Options for the client only
+        clientOptions.add_cascade(label='Armory', menu=armoryOptions)
+        clientOptions.add_command(label='Exit', command=self._quit)
+
+        # Create a new profile, etc.
+        newMenu.add_command(label="Listener")
+        newMenu.add_command(label="Profile")
+        newMenu.add_command(label="Implant")
+        newMenu.add_command(label="Website")
+
+        # View listeners, profiles, etc.
+        viewMenu.add_command(label="Listeners")
+        viewMenu.add_command(label="Websites")
+        viewMenu.add_command(label="Profiles")
+        viewMenu.add_command(label="Implants")
+        viewMenu.add_command(label="Connections")
+        viewMenu.add_command(label="Loot")
+
+        # Add top-level menus
+        menuBar.add_cascade(label="Client", menu=clientOptions)
+        menuBar.add_cascade(label="New", menu=newMenu)
+        menuBar.add_cascade(label="View", menu=viewMenu)
+
+        self.root.config(menu = menuBar)
+    
     # Skeleton of the UI - packed into its own function for convenience
     def _buildUI(self):
-        self.label = ttk.Label(text="0")
+        # Attach menubar to frame
+        self._buildMenuBar()
 
-        self.connections = ttk.Label(text="")
+        # Placeholder for *real* stuff
+        self.connections = ttk.Label(self.root, text="Awaiting initialization")
         self.connections.pack()
-
-        ttk.Button(
-            self.root, text="Don't click me >:(", command=self.server.do_thing
-        ).pack()
-        ttk.Button(
-            self.root, text="Get connection counts", command=self.server.test_connection
-        ).pack()
-        ttk.Button(self.root, text="Exit", command=self._quit).pack()
-        self.label.pack()  # Add label to UI
 
     # Update the window with fresh data from self.server
     # Only responsible for calling the redraw() methods of its direct descendants
@@ -70,15 +108,6 @@ class ClientWindow(ttk.Frame):
         self.connections.config(
             text=f"{len(self.server.beacons)} beacons | {len(self.server.sessions)} sessions"
         )
-
-        if self.server_events:
-            self.label.config(
-                text=self.server_events[0]
-            )
-
-        self.after(
-            REFRESH_RATE, self.redraw
-        )  # Redraw window after however many ms we need to maintain the framerate
 
         self.server_events = []
 
