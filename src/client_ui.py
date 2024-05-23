@@ -1,5 +1,6 @@
 import asyncio
 from sliver import SliverClient
+from tkinter import messagebox
 import ttkbootstrap as ttk
 import random
 import threading
@@ -44,9 +45,8 @@ class ClientWindow(ttk.Frame):
         self.redraw()  # Prepare to start drawing stuff to screen
         self.log.debug("Client UI window opened")
 
-    # Create a TODO popup
     def _TODO(self):
-        Todo(self.root)
+        messagebox.showwarning(title="TODO", message="This feature hasn't been implemented yet")
 
     # Build the menu at the top of the screen
     def _buildMenuBar(self):
@@ -93,19 +93,32 @@ class ClientWindow(ttk.Frame):
         tab = Tab(self.tabPanel.notebook, body)
         self.tabPanel.addTab(tab, title)
 
+    def _setSashPosition(self):
+        pane_height = self.mainWindow.winfo_height()
+        self.mainWindow.sashpos(0, pane_height // 2)
+
     # Skeleton of the UI - packed into its own function for convenience
     def _buildUI(self):
-        self.root.rowconfigure(1, weight=1)
-        self.root.columnconfigure(0, weight=1)
-
-        self.networkGraph = NetworkGraph(self.root, self.server)
-        self.networkGraph.grid()
-
-        self.tabPanel = TabPanel(self.root, self.server)
-        self.tabPanel.grid()
+        #self.root.rowconfigure(1, weight=1)
+        #self.root.columnconfigure(0, weight=1)
 
         # Attach menubar to frame
         self._buildMenuBar()
+
+        # Actual body of the C2 interface
+        self.mainWindow = ttk.PanedWindow(self.root, orient='vertical')
+        self.mainWindow.pack(expand=True, fill='both')
+
+        # Network graph of compromised hosts
+        self.networkPanel = ttk.Label(self.mainWindow, text="NETWORK PANEL GOES HERE")
+
+        # List of tabs for loot, listeners, implants, etc.
+        self.tabPanel = ttk.Label(self.mainWindow, text="TAB PANEL GOES HERE")
+
+        self.mainWindow.add(self.networkPanel)
+        self.mainWindow.add(self.tabPanel)
+        
+        self.root.after(200, self._setSashPosition)
 
     # Update the window with fresh data from self.server
     # Only responsible for calling the redraw() methods of its direct descendants
@@ -123,8 +136,8 @@ class ClientWindow(ttk.Frame):
             self._addTab(str(event), event.EventType)
 
         # Your UI redrawing code goes here
-        self.networkGraph.refresh()
-        self.tabPanel.refresh()
+        #self.networkGraph.refresh()
+        #self.tabPanel.refresh()
 
         # Cleanup
         self.server_events = []
@@ -149,4 +162,7 @@ def launchClient(app, log, config):
     )
 
     client = ClientWindow(app, log, config)
-    client.mainloop()  # Launch client app
+    try:
+        client.mainloop()  # Launch client app
+    except KeyboardInterrupt:
+        client._quit()
