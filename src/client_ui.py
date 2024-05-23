@@ -4,6 +4,7 @@ import ttkbootstrap as ttk
 import random
 import threading
 from server_session import ServerSession
+from ui_components import *
 
 REFRESH_RATE = int(
     1000 / 30
@@ -11,21 +12,24 @@ REFRESH_RATE = int(
 
 
 class ClientWindow(ttk.Frame):
-    def __init__(self, app, loops, log, config):  # , client):
+    def __init__(self, app, log, config):  # , client):
         super().__init__(app)
 
         # Server event processing should happen on its own dedicated asyncloop
         # This prevents server event floods from consuming GUI events and vice-versa
-        self.guiLoop, self.serverLoop = loops
         self.log = log
 
         # Initialize window
         self.root = app
 
-        self.server = ServerSession(config, log, self.serverLoop)
+        self.server = ServerSession(config, log)
         if not self.server.client:
-            console.critical("Failed to establish connection to teamserver")
+            self.log.critical("Failed to establish connection to teamserver")
             self._quit()
+
+        self.root.protocol("WM_DELETE_WINDOW", self._quit)
+
+        self.server_events = []
 
         # Add UI elements
         self._buildUI()
@@ -40,21 +44,68 @@ class ClientWindow(ttk.Frame):
         self.redraw()  # Prepare to start drawing stuff to screen
         self.log.debug("Client UI window opened")
 
+    # Create a TODO popup
+    def _TODO(self):
+        Todo(self.root)
+
+    # Build the menu at the top of the screen
+    def _buildMenuBar(self):
+        # Build main menu bar
+        menuBar = ttk.Menu(self.root, tearoff=0)
+
+        # Create sub-menus
+        clientOptions = ttk.Menu(menuBar, tearoff=0)
+        newMenu = ttk.Menu(menuBar, tearoff=0)
+        viewMenu = ttk.Menu(menuBar, tearoff=0)
+
+        # Armory options
+        armoryOptions = ttk.Menu(clientOptions, tearoff=0)
+        armoryOptions.add_command(label="Refresh", command=self._TODO)
+        armoryOptions.add_command(label="Search", command=self._TODO)
+
+        # Options for the client only
+        clientOptions.add_cascade(label="Armory", menu=armoryOptions)
+        clientOptions.add_command(label="Exit", command=self._quit)
+
+        # Create a new profile, etc.
+        newMenu.add_command(label="Listener")
+        newMenu.add_command(label="Profile")
+        newMenu.add_command(label="Implant")
+        newMenu.add_command(label="Website")
+
+        # View listeners, profiles, etc.
+        viewMenu.add_command(label="Jobs")
+        viewMenu.add_command(label="Listeners", command=self._addTab)
+        viewMenu.add_command(label="Websites")
+        viewMenu.add_command(label="Profiles")
+        viewMenu.add_command(label="Implants")
+        viewMenu.add_command(label="Connections", command=self.server.test_connection)
+        viewMenu.add_command(label="Loot")
+
+        # Add top-level menus
+        menuBar.add_cascade(label="Client", menu=clientOptions)
+        menuBar.add_cascade(label="New", menu=newMenu)
+        menuBar.add_cascade(label="View", menu=viewMenu)
+
+        self.root.config(menu=menuBar)
+
+    def _addTab(self, body="Custom tab! Woo!", title="Tab added at runtime!"):
+        tab = Tab(self.tabPanel.notebook, body)
+        self.tabPanel.addTab(tab, title)
+
     # Skeleton of the UI - packed into its own function for convenience
     def _buildUI(self):
-        self.label = ttk.Label(text="0")
+        self.root.rowconfigure(1, weight=1)
+        self.root.columnconfigure(0, weight=1)
 
-        self.connections = ttk.Label(text="")
-        self.connections.pack()
+        self.networkGraph = NetworkGraph(self.root, self.server)
+        self.networkGraph.grid()
 
-        ttk.Button(
-            self.root, text="Don't click me >:(", command=self.server.do_thing
-        ).pack()
-        ttk.Button(
-            self.root, text="Get connection counts", command=self.server.test_connection
-        ).pack()
-        ttk.Button(self.root, text="Exit", command=self._quit).pack()
-        self.label.pack()  # Add label to UI
+        self.tabPanel = TabPanel(self.root, self.server)
+        self.tabPanel.grid()
+
+        # Attach menubar to frame
+        self._buildMenuBar()
 
     # Update the window with fresh data from self.server
     # Only responsible for calling the redraw() methods of its direct descendants
@@ -63,21 +114,26 @@ class ClientWindow(ttk.Frame):
     # This is done at the configured frame rate (30fps at time of writing) to redraw
     # the entire GUI in "real time" using information from the serversession as-needed
     def redraw(self):
-        self.connections.config(
-            text=f"{len(self.server.beacons)} beacons | {len(self.server.sessions)} sessions"
-        )
-        self.label.config(
-            text=self.server.testValue
-        )  # Test for GUI->client->server->client->GUI round-trip
-        self.after(
-            REFRESH_RATE, self.redraw
-        )  # Redraw window after however many ms we need to maintain the framerate
+        self.server_events += self.server.events
+        self.server.events = []  # Clear out event queue after fetching
+
+        # TODO - We don't want to add new tabs for EVERYTHING
+        # But it's a nice PoC
+        for event in self.server_events:
+            self._addTab(str(event), event.EventType)
+
+        # Your UI redrawing code goes here
+        self.networkGraph.refresh()
+        self.tabPanel.refresh()
+
+        # Cleanup
+        self.server_events = []
+        self.root.after(REFRESH_RATE, self.redraw)
 
     # Called whenever we need to bail out of the GUI for any reason
     # It does all our clean shutdown stuff
     def _quit(self):
         # Shut down event processing
-        self.guiLoop.call_soon_threadsafe(self.guiLoop.stop)
         self.server.shutdown()
 
         # Shut down main window
@@ -87,29 +143,10 @@ class ClientWindow(ttk.Frame):
         exit()
 
 
-# Super simple event loop processor - just run threads for async stuff forever
-def run_loop(loop):
-    asyncio.set_event_loop(loop)
-    loop.run_forever()
-
-
 def launchClient(app, log, config):
     log.info(
         f"Establishing connection to {config.lhost}:{config.lport} as {config.operator}"
     )
 
-    # Launch a seperate process to handle asyncio events
-    GUI_loop = asyncio.new_event_loop()
-    Server_loop = asyncio.new_event_loop()
-
-    tGUI_loop = threading.Thread(target=run_loop, args=(GUI_loop,))
-    tServer_loop = threading.Thread(target=run_loop, args=(Server_loop,))
-
-    tGUI_loop.start()
-    tServer_loop.start()
-
-    client = ClientWindow(app, (GUI_loop, Server_loop), log, config)
+    client = ClientWindow(app, log, config)
     client.mainloop()  # Launch client app
-
-    tGUI_loop.join()
-    tServer_loop.join()
