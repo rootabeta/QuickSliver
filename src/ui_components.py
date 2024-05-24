@@ -47,6 +47,7 @@ class TabPanel(ttk.Frame):
 
     def addTab(self, tab, title):
         self.notebook.add(tab, text=title)
+        self.notebook.select(tab) # Focus on new tab
 
     def removeTab(self, tab):
         pass
