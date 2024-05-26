@@ -6,6 +6,7 @@ import random
 import threading
 from server_session import ServerSession
 from ui_components import *
+from new_dialogues import *
 
 REFRESH_RATE = int(
     1000 / 30
@@ -68,7 +69,7 @@ class ClientWindow(ttk.Frame):
         clientOptions.add_command(label="Exit", command=self._quit)
 
         # Create a new profile, etc.
-        newMenu.add_command(label="Listener")
+        newMenu.add_command(label="Listener", command=self._newListener)
         newMenu.add_command(label="Profile")
         newMenu.add_command(label="Implant")
         newMenu.add_command(label="Website")
@@ -88,6 +89,9 @@ class ClientWindow(ttk.Frame):
         menuBar.add_cascade(label="View", menu=viewMenu)
 
         self.root.config(menu=menuBar)
+
+    def _newListener(self):
+        listenerConfig = NewListener(self.root, self.server)
 
     def _addTab(self, body="Custom tab! Woo!", title="Tab added at runtime!"):
         tab = Tab(self.tabPanel.notebook, body)
