@@ -15,8 +15,13 @@ class NetworkGraph(ttk.Frame):
     def __init__(self, parent, server):
         super().__init__(parent)
 
-        self.label = ttk.Label(self, text="Foo")
-        self.label.pack(expand=True, fill='both')
+        self.canvas = ttk.Canvas(self, bg="red", confine=False, relief="sunken")
+        self.canvas.pack(expand=True, fill='both')
+
+        self.canvas.create_line(10, 10, 200, 200, fill='white')
+        
+        #self.label = ttk.Label(self, text="Foo")
+        #self.label.pack(expand=True, fill='both')
 
     def refresh(self):
         pass

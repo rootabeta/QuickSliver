@@ -80,7 +80,7 @@ class ClientWindow(ttk.Frame):
         viewMenu.add_command(label="Websites")
         viewMenu.add_command(label="Profiles")
         viewMenu.add_command(label="Implants")
-        viewMenu.add_command(label="Connections", command=self.server.test_connection)
+        viewMenu.add_command(label="Connections", command=self._listConnections)
         viewMenu.add_command(label="Loot")
 
         # Add top-level menus
@@ -89,6 +89,16 @@ class ClientWindow(ttk.Frame):
         menuBar.add_cascade(label="View", menu=viewMenu)
 
         self.root.config(menu=menuBar)
+
+    def _listConnections(self):
+        connections = ["A", "B", "C"]
+        listbox = ttk.Treeview(self.tabPanel.notebook)
+        # Can be grouped by host! Could be handy.
+        for i, connection in enumerate(connections):
+            # Can use session/beacon ID as iid :3
+            listbox.insert("", i+1, iid=connection, text=connection)
+
+        self.tabPanel.addTab(listbox, "Connections")
 
     def _newListener(self):
         listenerConfig = NewListener(self.root, self.server)
