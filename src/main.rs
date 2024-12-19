@@ -32,7 +32,6 @@ fn main() -> Result<()> {
 
     let session = SliverClient::from(config);
     session.connect()?;
-    // TODO: Order client to establish connection to server and prepare for commands
 
     // Instantiate GUI wrapper around our now armed-and-ready connection
     let native_options = eframe::NativeOptions::default();
