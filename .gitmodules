@@ -1,0 +1,3 @@
+[submodule "src/sliver"]
+	path = src/sliver
+	url = https://github.com/BishopFox/sliver
