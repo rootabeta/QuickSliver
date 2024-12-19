@@ -1,8 +1,10 @@
 mod sliver_client;
+mod sliver_ui;
 
 use anyhow::Result;
 use clap::Parser;
 use sliver_client::{load_config, SliverClient};
+use sliver_ui::Interface;
 
 #[derive(Parser, Debug)]
 struct Args { 
@@ -23,10 +25,29 @@ fn main() -> Result<()> {
         config.lport
     );
 
-    let _session = SliverClient::from(config);
+    println!("Establishing connection to {}:{}",
+        config.lhost, 
+        config.lport
+    );
 
-    // TODO: Create egui interface that can take in a 
-    // Sliver client instance and invoke/respond to APIs
-    // to perform actions and receive information
-    Ok(())
+    let session = SliverClient::from(config);
+    session.connect()?;
+    // TODO: Order client to establish connection to server and prepare for commands
+
+    // Instantiate GUI wrapper around our now armed-and-ready connection
+    let native_options = eframe::NativeOptions::default();
+    let mut application = Interface::from_session(session);
+
+    // Launch GUI and allow operator to take control
+    println!("Connection established, starting user interface");
+    println!("Happy hunting!");
+    match eframe::run_simple_native(
+        "QuickSliver",
+        native_options,
+        move |ctx, _frame| { 
+            application.update(ctx)
+        }) { 
+        Ok(_) => Ok(()),
+        Err(reason) => panic!("Fatal error: {reason}"),
+    }
 }
