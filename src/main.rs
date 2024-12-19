@@ -2,7 +2,7 @@ mod sliver_client;
 
 use anyhow::Result;
 use clap::Parser;
-use sliver_client::load_config;
+use sliver_client::{load_config, SliverClient};
 
 #[derive(Parser, Debug)]
 struct Args { 
@@ -17,11 +17,13 @@ fn main() -> Result<()> {
     // TODO: Use rfd to prompt for config if != 1 found
     // TODO: Consider custom prompt instead of RFD?
     let config = load_config(args.config_file)?;
-    println!("DBG: loaded config for {}@{}:{}",
+    println!("Loaded config for {}@{}:{}",
         config.operator,
         config.lhost,
         config.lport
     );
+
+    let _session = SliverClient::from(config);
 
     // TODO: Create egui interface that can take in a 
     // Sliver client instance and invoke/respond to APIs
