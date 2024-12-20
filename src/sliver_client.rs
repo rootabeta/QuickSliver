@@ -49,8 +49,7 @@ pub fn load_config(file: PathBuf) -> Result<Config> {
 pub struct SliverSession {
     config: Config,
     runtime: Runtime,
-    session: SliverRpcClient<Channel>
-//    channel: Channel,
+    session: SliverRpcClient<Channel>, //    channel: Channel,
 }
 
 // TODO: Expose APIs to invoke gRPC functionality from GUI on-demand
@@ -89,7 +88,7 @@ impl SliverSession {
         Ok(Self {
             config,
             runtime,
-            session
+            session,
         })
     }
 
