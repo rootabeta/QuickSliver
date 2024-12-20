@@ -5,19 +5,19 @@ use std::path::PathBuf;
 use tokio::runtime::Runtime;
 use tonic::transport::{Certificate, Channel, ClientTlsConfig, Identity};
 
-pub mod commonpb { 
+pub mod commonpb {
     tonic::include_proto!("commonpb");
 }
 
-pub mod clientpb { 
+pub mod clientpb {
     tonic::include_proto!("clientpb");
 }
 
-pub mod sliverpb { 
+pub mod sliverpb {
     tonic::include_proto!("sliverpb");
 }
 
-pub mod rpcpb { 
+pub mod rpcpb {
     tonic::include_proto!("rpcpb");
 }
 
@@ -54,7 +54,7 @@ pub struct SliverSession {
 // TODO: Expose APIs to invoke gRPC functionality from GUI on-demand
 // TODO: Expose APIs to fetch information from internal state, updated by server
 /*
-    let request = tonic::Request::new(GreetRequest { 
+    let request = tonic::Request::new(GreetRequest {
         name: "Tim".into(),
     });
 
@@ -81,14 +81,12 @@ impl SliverSession {
 
         // Open handle to runtime and order channel to connect
         let handle = runtime.handle();
-        let channel = handle.block_on(async {
-            channel.connect().await
-        })?;
+        let channel = handle.block_on(async { channel.connect().await })?;
 
-        Ok(Self { 
+        Ok(Self {
             config,
             runtime,
-            channel
+            channel,
         })
     }
 
