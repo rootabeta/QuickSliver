@@ -7,9 +7,9 @@ use sliver_client::{load_config, SliverClient};
 use sliver_ui::Interface;
 
 #[derive(Parser, Debug)]
-struct Args { 
+struct Args {
     /// Path to sliver configuration file
-    config_file: std::path::PathBuf
+    config_file: std::path::PathBuf,
 }
 
 fn main() -> Result<()> {
@@ -19,15 +19,14 @@ fn main() -> Result<()> {
     // TODO: Use rfd to prompt for config if != 1 found
     // TODO: Consider custom prompt instead of RFD?
     let config = load_config(args.config_file)?;
-    println!("Loaded config for {}@{}:{}",
-        config.operator,
-        config.lhost,
-        config.lport
+    println!(
+        "Loaded config for {}@{}:{}",
+        config.operator, config.lhost, config.lport
     );
 
-    println!("Establishing connection to {}:{}",
-        config.lhost, 
-        config.lport
+    println!(
+        "Establishing connection to {}:{}",
+        config.lhost, config.lport
     );
 
     let session = SliverClient::from(config);
@@ -40,12 +39,9 @@ fn main() -> Result<()> {
     // Launch GUI and allow operator to take control
     println!("Connection established, starting user interface");
     println!("Happy hunting!");
-    match eframe::run_simple_native(
-        "QuickSliver",
-        native_options,
-        move |ctx, _frame| { 
-            application.update(ctx)
-        }) { 
+    match eframe::run_simple_native("QuickSliver", native_options, move |ctx, _frame| {
+        application.update(ctx)
+    }) {
         Ok(_) => Ok(()),
         Err(reason) => panic!("Fatal error: {reason}"),
     }
