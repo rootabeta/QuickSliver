@@ -5,6 +5,22 @@ use std::path::PathBuf;
 use tokio::runtime::Runtime;
 use tonic::transport::{Certificate, Channel, ClientTlsConfig, Identity};
 
+pub mod commonpb { 
+    tonic::include_proto!("commonpb");
+}
+
+pub mod clientpb { 
+    tonic::include_proto!("clientpb");
+}
+
+pub mod sliverpb { 
+    tonic::include_proto!("sliverpb");
+}
+
+pub mod rpcpb { 
+    tonic::include_proto!("rpcpb");
+}
+
 /// Struct to read in values from Sliver client config file
 #[derive(Debug, Deserialize)]
 pub struct Config {
@@ -37,6 +53,14 @@ pub struct SliverSession {
 
 // TODO: Expose APIs to invoke gRPC functionality from GUI on-demand
 // TODO: Expose APIs to fetch information from internal state, updated by server
+/*
+    let request = tonic::Request::new(GreetRequest { 
+        name: "Tim".into(),
+    });
+
+    let response = client.say_hello(request).await?;
+    println!("Response: {:?}", response);
+*/
 impl SliverSession {
     // Create a session from a configuration file
     pub fn connect(config: Config) -> Result<Self> {
@@ -47,7 +71,7 @@ impl SliverSession {
         let client_key = Certificate::from_pem(&config.private_key);
         let client_identity = Identity::from_pem(client_cert, client_key);
 
-        let mut tls = ClientTlsConfig::new()
+        let tls = ClientTlsConfig::new()
             .domain_name("multiplayer")
             .ca_certificate(ca_cert)
             .identity(client_identity);
