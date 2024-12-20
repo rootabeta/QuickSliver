@@ -43,10 +43,10 @@ pub struct SliverClient {
 }
 
 // TODO: Implement gRPC over mTLS connection with Tonic
-// TODO: Implement Sliver client functionality from gRPC files
 // TODO: Expose APIs to invoke gRPC functionality from GUI on-demand
 // TODO: Expose APIs to fetch information from internal state, updated by server
 impl SliverClient {
+    // Create a session from a configuration file
     pub fn from(config: Config) -> Self {
         Self { config }
     }
@@ -55,6 +55,9 @@ impl SliverClient {
     pub fn connect(&self) -> Result<()> {
         // Skeleton code, will later house mTLS negotation and write back
         // opened connection to struct for use
+        // TODO: Open mTLS connection to server using config file
+        // This mTLS connection is fed to the Tonic gRPC client, which
+        // we can then throw Protobuf commands at to invoke commands on the server
         Ok(())
     }
 

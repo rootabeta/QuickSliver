@@ -15,9 +15,7 @@ struct Args {
 fn main() -> Result<()> {
     let args = Args::parse();
 
-    // TODO: Automatically search for and load config file
-    // TODO: Use rfd to prompt for config if != 1 found
-    // TODO: Consider custom prompt instead of RFD?
+    // TODO: Use select_config instead of load_config to allow dynamic selection
     let config = load_config(args.config_file)?;
     println!(
         "Loaded config for {}@{}:{}",
