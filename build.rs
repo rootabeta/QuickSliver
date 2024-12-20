@@ -1,4 +1,4 @@
-// Stub to compile protobufs from Sliver for use elsewhere
+// Stub to compile protobufs from Sliver for use in our client
 fn main() -> Result<(), Box<dyn std::error::Error>> { 
     /* From the Sliver protobuf documentation:
      * `commonpb` - Common generic messages shared between `clientpb` and `sliverpb`. 
@@ -8,13 +8,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
      *      -> Not all messages defined in this file will appear in client<->server communication, some are specific to implant<->server.
      * `rpcpb` - gRPC service definitions
      */
-
-    /*
-    tonic_build::compile_protos("sliver/protobuf/commonpb/common.proto")?;
-    tonic_build::compile_protos("sliver/protobuf/sliverpb/sliver.proto")?;
-    tonic_build::compile_protos("sliver/protobuf/clientpb/client.proto")?;
-    tonic_build::compile_protos("sliver/protobuf/rpcpb/services.proto")?;
-    */
 
     tonic_build::configure()
         .build_client(true) // We only care about the client tools
