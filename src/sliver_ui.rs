@@ -1,7 +1,7 @@
-use crate::sliver_client::SliverClient;
+use crate::sliver_client::SliverSession;
 
 pub struct Interface {
-    session: SliverClient,
+    session: SliverSession,
 }
 
 impl Interface {
@@ -9,7 +9,7 @@ impl Interface {
     // This is our conduit from the GUI to the "real world"
     // Using this, we can have callbacks in the interface run actions on the session
     // Conversely, we can fetch information from the session
-    pub fn from_session(session: SliverClient) -> Self {
+    pub fn from_session(session: SliverSession) -> Self {
         Self { session }
     }
 

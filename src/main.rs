@@ -3,7 +3,7 @@ mod sliver_ui;
 
 use anyhow::Result;
 use clap::Parser;
-use sliver_client::{load_config, SliverClient};
+use sliver_client::{load_config, SliverSession};
 use sliver_ui::Interface;
 
 #[derive(Parser, Debug)]
@@ -27,8 +27,7 @@ fn main() -> Result<()> {
         config.lhost, config.lport
     );
 
-    let session = SliverClient::from(config);
-    session.connect()?;
+    let session = SliverSession::connect(config)?;
 
     // Instantiate GUI wrapper around our now armed-and-ready connection
     let native_options = eframe::NativeOptions::default();

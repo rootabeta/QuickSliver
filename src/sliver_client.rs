@@ -2,15 +2,10 @@ use anyhow::Result;
 use serde::Deserialize;
 use std::fs;
 use std::path::PathBuf;
+use tokio::runtime::Runtime;
+use tonic::transport::{Certificate, Channel, ClientTlsConfig, Identity};
 
 /// Struct to read in values from Sliver client config file
-/* TODO: This disables warning for dead code, specifically fields
- * like private_key or ca_certificate which will be used to open an mTLS
- * connection to the C2 server. These will be used in the future, but for now,
- * they just need to hang out and look pretty until I implement the client/server
- * communications stack. Once I do, dead code warnings will be re-enabled.
- * This comment is here to remind me to do just that. */
-#[allow(dead_code)]
 #[derive(Debug, Deserialize)]
 pub struct Config {
     pub operator: String,
@@ -34,31 +29,43 @@ pub fn load_config(file: PathBuf) -> Result<Config> {
 /// log into the server, and perform commands.
 /// Handles commands coming in from gRPC by updating internal state,
 /// which can then be referenced elsewhere by accessing the state
-pub struct SliverClient {
+pub struct SliverSession {
     config: Config,
-    // Will contain a session to communicate over, with
-    // structs for beacons, sessions, loot, messages, etc.
-    // - each subcomponent exposing its own functions, such as
-    // let interactive_session = SliverClient::Beacons::get(beacon_id).go_interactive();
+    runtime: Runtime,
+    channel: Channel,
 }
 
-// TODO: Implement gRPC over mTLS connection with Tonic
 // TODO: Expose APIs to invoke gRPC functionality from GUI on-demand
 // TODO: Expose APIs to fetch information from internal state, updated by server
-impl SliverClient {
+impl SliverSession {
     // Create a session from a configuration file
-    pub fn from(config: Config) -> Self {
-        Self { config }
-    }
+    pub fn connect(config: Config) -> Result<Self> {
+        let runtime = Runtime::new().expect("Failed to open runtime");
 
-    /// Activate the connection to the server
-    pub fn connect(&self) -> Result<()> {
-        // Skeleton code, will later house mTLS negotation and write back
-        // opened connection to struct for use
-        // TODO: Open mTLS connection to server using config file
-        // This mTLS connection is fed to the Tonic gRPC client, which
-        // we can then throw Protobuf commands at to invoke commands on the server
-        Ok(())
+        let ca_cert = Certificate::from_pem(&config.ca_certificate);
+        let client_cert = Certificate::from_pem(&config.certificate);
+        let client_key = Certificate::from_pem(&config.private_key);
+        let client_identity = Identity::from_pem(client_cert, client_key);
+
+        let mut tls = ClientTlsConfig::new()
+            .domain_name("multiplayer")
+            .ca_certificate(ca_cert)
+            .identity(client_identity);
+
+        let connection_string = format!("https://{}:{}", &config.lhost, &config.lport);
+        let channel = Channel::from_shared(connection_string)?.tls_config(tls)?;
+
+        // Open handle to runtime and order channel to connect
+        let handle = runtime.handle();
+        let channel = handle.block_on(async {
+            channel.connect().await
+        })?;
+
+        Ok(Self { 
+            config,
+            runtime,
+            channel
+        })
     }
 
     // Basic PoC to demonstrate getting values from config/session -> GUI
