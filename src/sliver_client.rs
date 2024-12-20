@@ -1,4 +1,5 @@
 use anyhow::Result;
+use rpcpb::sliver_rpc_client::SliverRpcClient;
 use serde::Deserialize;
 use std::fs;
 use std::path::PathBuf;
@@ -48,7 +49,8 @@ pub fn load_config(file: PathBuf) -> Result<Config> {
 pub struct SliverSession {
     config: Config,
     runtime: Runtime,
-    channel: Channel,
+    session: SliverRpcClient<Channel>
+//    channel: Channel,
 }
 
 // TODO: Expose APIs to invoke gRPC functionality from GUI on-demand
@@ -82,11 +84,12 @@ impl SliverSession {
         // Open handle to runtime and order channel to connect
         let handle = runtime.handle();
         let channel = handle.block_on(async { channel.connect().await })?;
+        let session = SliverRpcClient::new(channel);
 
         Ok(Self {
             config,
             runtime,
-            channel,
+            session
         })
     }
 
