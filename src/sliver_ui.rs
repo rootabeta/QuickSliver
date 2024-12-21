@@ -2,6 +2,7 @@ use crate::sliver_client::SliverSession;
 
 pub struct Interface {
     session: SliverSession,
+    version: String
 }
 
 impl Interface {
@@ -10,7 +11,10 @@ impl Interface {
     // Using this, we can have callbacks in the interface run actions on the session
     // Conversely, we can fetch information from the session
     pub fn from_session(session: SliverSession) -> Self {
-        Self { session }
+        Self { 
+            session,
+            version: "???".to_string()
+        }
     }
 
     pub fn update(&mut self, ctx: &egui::Context) {
@@ -18,12 +22,15 @@ impl Interface {
             // Hello world, but with SliverClient integration PoC
             let text = format!("Hello, operator {}", &self.session.get_operator());
             ui.label(text);
+            let text = format!("Connected to {}:{}, version={}", 
+                &self.session.config.lhost, 
+                &self.session.config.lport,
+                &self.version
+            );
+            ui.label(text);
 
             if ui.button("Version test").clicked() {
-                match self.session.get_version() {
-                    Ok(version) => println!("Got version from function: {:?}", version),
-                    Err(exception) => println!("Error: {exception}"),
-                };
+                self.version = self.session.get_version().unwrap_or("ERR".to_string());
             }
         });
     }

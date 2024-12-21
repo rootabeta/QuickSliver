@@ -55,7 +55,7 @@ impl Config {
 /// Handles commands coming in from gRPC by updating internal state,
 /// which can then be referenced elsewhere by accessing the state
 pub struct SliverSession {
-    config: Config,
+    pub config: Config,
     runtime: Runtime,
     // I'm sorry for the typing mess here
     session: SliverRpcClient<InterceptedService<Channel, TokenAuthInterceptor>>,
@@ -113,8 +113,11 @@ impl SliverSession {
         let response =
             execution_handle.block_on(async { self.session.get_version(version_request).await })?;
         println!("Got response {:?}", response);
-
-        Ok("TODO".to_string())
+        let major = response.get_ref().major;
+        let minor = response.get_ref().minor;
+        let patch = response.get_ref().patch;
+        let version: String = format!("{}.{}p{}", major, minor, patch);
+        Ok(version)
     }
 
     // Basic PoC to demonstrate getting values from config/session -> GUI
