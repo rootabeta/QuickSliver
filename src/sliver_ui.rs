@@ -18,6 +18,13 @@ impl Interface {
             // Hello world, but with SliverClient integration PoC
             let text = format!("Hello, operator {}", &self.session.get_operator());
             ui.label(text);
+
+            if ui.button("Version test").clicked() { 
+                match self.session.get_version() { 
+                    Ok(version) => println!("Got version from function: {:?}", version),
+                    Err(exception) => println!("Error: {exception}"),
+                };
+            }
         });
     }
 }

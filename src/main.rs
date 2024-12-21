@@ -1,9 +1,10 @@
+mod interceptor;
 mod sliver_client;
 mod sliver_ui;
 
 use anyhow::Result;
 use clap::Parser;
-use sliver_client::{load_config, SliverSession};
+use sliver_client::{Config, SliverSession};
 use sliver_ui::Interface;
 
 #[derive(Parser, Debug)]
@@ -16,7 +17,7 @@ fn main() -> Result<()> {
     let args = Args::parse();
 
     // TODO: Use select_config instead of load_config to allow dynamic selection
-    let config = load_config(args.config_file)?;
+    let config = Config::from(args.config_file)?;
     println!(
         "Loaded config for {}@{}:{}",
         config.operator, config.lhost, config.lport

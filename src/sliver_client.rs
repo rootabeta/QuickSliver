@@ -1,9 +1,11 @@
 use anyhow::Result;
+use crate::interceptor::TokenAuthInterceptor;
 use rpcpb::sliver_rpc_client::SliverRpcClient;
 use serde::Deserialize;
 use std::fs;
 use std::path::PathBuf;
 use tokio::runtime::Runtime;
+use tonic::service::interceptor::InterceptedService;
 use tonic::transport::{Certificate, Channel, ClientTlsConfig, Identity};
 
 pub mod commonpb {
@@ -35,10 +37,16 @@ pub struct Config {
 }
 
 /// Given a configuration file, return a Config object
-pub fn load_config(file: PathBuf) -> Result<Config> {
-    let config_contents = fs::read_to_string(file)?;
-    let config: Config = serde_json::from_str(&config_contents)?;
-    Ok(config)
+impl Config { 
+    pub fn from(file: PathBuf) -> Result<Self> {
+        let config_contents = fs::read_to_string(file)?;
+        let config: Config = serde_json::from_str(&config_contents)?;
+        Ok(config)
+    }
+
+    pub fn get_token(&self) -> String { 
+        self.token.clone()
+    }
 }
 
 /// Struct to handle Sliver session from a config file.
@@ -49,7 +57,8 @@ pub fn load_config(file: PathBuf) -> Result<Config> {
 pub struct SliverSession {
     config: Config,
     runtime: Runtime,
-    session: SliverRpcClient<Channel>, //    channel: Channel,
+    // I'm sorry for the typing mess here
+    session: SliverRpcClient<InterceptedService<Channel, TokenAuthInterceptor>>,
 }
 
 // TODO: Expose APIs to invoke gRPC functionality from GUI on-demand
@@ -80,16 +89,33 @@ impl SliverSession {
         let connection_string = format!("https://{}:{}", &config.lhost, &config.lport);
         let channel = Channel::from_shared(connection_string)?.tls_config(tls)?;
 
+        // Emulate Go's PerRPCCredentials system with a custom interceptor
+        let interceptor = TokenAuthInterceptor::new(config.get_token());
+
         // Open handle to runtime and order channel to connect
         let handle = runtime.handle();
         let channel = handle.block_on(async { channel.connect().await })?;
-        let session = SliverRpcClient::new(channel);
+
+        // Make the session using the authenticator-attached channel, instead of the raw one
+//        let session = SliverRpcClient::new(intercepted_channel);
+        let session = SliverRpcClient::with_interceptor(channel, interceptor);
 
         Ok(Self {
             config,
             runtime,
             session,
         })
+    }
+
+    pub fn get_version(&mut self) -> Result<String> { 
+        let execution_handle = self.runtime.handle();
+        let version_request = tonic::Request::new(commonpb::Empty{});
+        let response = execution_handle.block_on(async {
+            self.session.get_version(version_request).await
+        })?;
+        println!("Got response {:?}", response);
+
+        Ok("TODO".to_string())
     }
 
     // Basic PoC to demonstrate getting values from config/session -> GUI
