@@ -1,5 +1,5 @@
-use anyhow::Result;
 use crate::interceptor::TokenAuthInterceptor;
+use anyhow::Result;
 use rpcpb::sliver_rpc_client::SliverRpcClient;
 use serde::Deserialize;
 use std::fs;
@@ -37,14 +37,14 @@ pub struct Config {
 }
 
 /// Given a configuration file, return a Config object
-impl Config { 
+impl Config {
     pub fn from(file: PathBuf) -> Result<Self> {
         let config_contents = fs::read_to_string(file)?;
         let config: Config = serde_json::from_str(&config_contents)?;
         Ok(config)
     }
 
-    pub fn get_token(&self) -> String { 
+    pub fn get_token(&self) -> String {
         self.token.clone()
     }
 }
@@ -97,7 +97,7 @@ impl SliverSession {
         let channel = handle.block_on(async { channel.connect().await })?;
 
         // Make the session using the authenticator-attached channel, instead of the raw one
-//        let session = SliverRpcClient::new(intercepted_channel);
+        //        let session = SliverRpcClient::new(intercepted_channel);
         let session = SliverRpcClient::with_interceptor(channel, interceptor);
 
         Ok(Self {
@@ -107,12 +107,11 @@ impl SliverSession {
         })
     }
 
-    pub fn get_version(&mut self) -> Result<String> { 
+    pub fn get_version(&mut self) -> Result<String> {
         let execution_handle = self.runtime.handle();
-        let version_request = tonic::Request::new(commonpb::Empty{});
-        let response = execution_handle.block_on(async {
-            self.session.get_version(version_request).await
-        })?;
+        let version_request = tonic::Request::new(commonpb::Empty {});
+        let response =
+            execution_handle.block_on(async { self.session.get_version(version_request).await })?;
         println!("Got response {:?}", response);
 
         Ok("TODO".to_string())
