@@ -17,8 +17,29 @@ impl Interface {
         }
     }
 
+
     pub fn update(&mut self, ctx: &egui::Context) {
         egui::CentralPanel::default().show(&ctx, |ui| {
+
+            egui::menu::bar(ui, |ui| { 
+                ui.menu_button("Connection", |ui| { 
+                    if ui.button("Version Test").clicked() {
+                        self.version = self.session.
+                            get_version()
+                            .unwrap_or(
+                                "ERR".to_string()
+                            );
+                    }
+                });
+                ui.menu_button("Armory", |_ui| {});
+                ui.menu_button("Listeners", |_ui| {});
+                ui.menu_button("Profiles", |_ui| {});
+                ui.menu_button("Generate", |_ui| {});
+                ui.menu_button("Jobs", |_ui| {});
+                ui.menu_button("Loot", |_ui| {});
+
+            });
+
             // Hello world, but with SliverClient integration PoC
             let text = format!("Hello, operator {}", &self.session.get_operator());
             ui.label(text);
@@ -28,10 +49,6 @@ impl Interface {
                 &self.version
             );
             ui.label(text);
-
-            if ui.button("Version test").clicked() {
-                self.version = self.session.get_version().unwrap_or("ERR".to_string());
-            }
 
             if ui.button("Update agents").clicked() { 
                 if let Ok((beacons, sessions)) = self.session.update_agents() { 
