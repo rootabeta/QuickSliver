@@ -115,18 +115,6 @@ impl SliverSession {
         })
     }
 
-    pub fn get_version(&mut self) -> Result<String> {
-        let execution_handle = self.runtime.handle();
-        let version_request = Request::new(commonpb::Empty {});
-        let response =
-            execution_handle.block_on(async { self.session.get_version(version_request).await })?;
-        let major = response.get_ref().major;
-        let minor = response.get_ref().minor;
-        let patch = response.get_ref().patch;
-        let version: String = format!("{}.{}p{}", major, minor, patch);
-        Ok(version)
-    }
-
     pub fn update_agents(&mut self) -> Result<(&Vec<Beacon>, &Vec<Session>)> { 
         let execution_handle = self.runtime.handle();
         let mut session_handle = self.session.clone();
@@ -153,8 +141,4 @@ impl SliverSession {
         Ok((&self.beacons, &self.sessions))
     }
 
-    // Basic PoC to demonstrate getting values from config/session -> GUI
-    pub fn get_operator(&self) -> &str {
-        &self.config.operator
-    }
 }

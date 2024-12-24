@@ -1,4 +1,5 @@
 use crate::sliver_client::SliverSession;
+use eframe::emath::Vec2b;
 use egui_extras::Column;
 
 pub struct Interface {
@@ -19,7 +20,7 @@ impl Interface {
 
     pub fn update(&mut self, ctx: &egui::Context) {
         egui::CentralPanel::default().show(&ctx, |ui| {
-
+            
             // Menubar
             egui::menu::bar(ui, |ui| { 
                 /*    if ui.button("Version Test").clicked() {
@@ -40,8 +41,14 @@ impl Interface {
 
             });
 
+            // Workaround to prevent label wrapping
+            ui.style_mut().wrap_mode = Some(egui::TextWrapMode::Extend);
+
             // Table of beacons/sessions
             egui_extras::TableBuilder::new(ui)
+                .auto_shrink(Vec2b{x: false, y: true})
+                .column(Column::auto().resizable(true))
+                .column(Column::auto().resizable(true))
                 .column(Column::auto().resizable(true))
                 .column(Column::auto().resizable(true))
                 .header(20.0, |mut header| { 
@@ -49,17 +56,62 @@ impl Interface {
                         ui.heading("Name");
                     });
                     header.col(|ui| { 
-                        ui.heading("Remote Address");
+                        ui.heading("Address");
+                    });
+                    header.col(|ui| { 
+                        ui.heading("User");
+                    });
+                    header.col(|ui| { 
+                        ui.heading("Status");
                     });
                 })
                 .body(|mut body| { 
                     for session in &self.session.sessions { 
                         body.row(30.0, |mut row| { 
                             row.col(|ui| { 
-                                ui.label(&session.name);
+                                let name_title = format!("{} (S)", &session.name);
+                                ui.label(name_title);
                             });
                             row.col(|ui| {
                                 ui.label(&session.remote_address);
+                            });
+                            row.col(|ui| { 
+                                let user_string = format!("{}@{}",
+                                    &session.username,
+                                    &session.hostname
+                                );
+                                ui.label(user_string);
+                            });
+                            row.col(|ui| { 
+                                ui.label(match session.is_dead { 
+                                    true => "Dead :(",
+                                    false => "Alive"
+                                });
+                            });
+                        })
+                    }
+
+                    for beacon in &self.session.beacons { 
+                        body.row(30.0, |mut row| { 
+                            row.col(|ui| { 
+                                let name_title = format!("{} (B)", &beacon.name);
+                                ui.label(name_title);
+                            });
+                            row.col(|ui| {
+                                ui.label(&beacon.remote_address);
+                            });
+                            row.col(|ui| {
+                                let user_string = format!("{}@{}",
+                                    &beacon.username,
+                                    &beacon.hostname
+                                );
+                                ui.label(user_string);
+                            });
+                            row.col(|ui| { 
+                                ui.label(match beacon.is_dead { 
+                                    true => "Dead :(",
+                                    false => "Alive"
+                                });
                             });
                         })
                     }
