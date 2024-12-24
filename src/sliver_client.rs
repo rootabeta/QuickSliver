@@ -1,10 +1,12 @@
-use crate::interceptor::TokenAuthInterceptor;
 use anyhow::Result;
+use crate::interceptor::TokenAuthInterceptor;
+use clientpb::{Beacon, Session};
 use rpcpb::sliver_rpc_client::SliverRpcClient;
 use serde::Deserialize;
 use std::fs;
 use std::path::PathBuf;
 use tokio::runtime::Runtime;
+use tonic::{Request, Response};
 use tonic::service::interceptor::InterceptedService;
 use tonic::transport::{Certificate, Channel, ClientTlsConfig, Identity};
 
@@ -56,6 +58,8 @@ impl Config {
 /// which can then be referenced elsewhere by accessing the state
 pub struct SliverSession {
     pub config: Config,
+    pub sessions: Vec<Session>,
+    pub beacons: Vec<Beacon>,
     runtime: Runtime,
     // I'm sorry for the typing mess here
     session: SliverRpcClient<InterceptedService<Channel, TokenAuthInterceptor>>,
@@ -97,27 +101,56 @@ impl SliverSession {
         let channel = handle.block_on(async { channel.connect().await })?;
 
         // Make the session using the authenticator-attached channel, instead of the raw one
-        //        let session = SliverRpcClient::new(intercepted_channel);
         let session = SliverRpcClient::with_interceptor(channel, interceptor);
+
+        let beacons = Vec::new();
+        let sessions = Vec::new();
 
         Ok(Self {
             config,
             runtime,
             session,
+            beacons,
+            sessions
         })
     }
 
     pub fn get_version(&mut self) -> Result<String> {
         let execution_handle = self.runtime.handle();
-        let version_request = tonic::Request::new(commonpb::Empty {});
+        let version_request = Request::new(commonpb::Empty {});
         let response =
             execution_handle.block_on(async { self.session.get_version(version_request).await })?;
-        println!("Got response {:?}", response);
         let major = response.get_ref().major;
         let minor = response.get_ref().minor;
         let patch = response.get_ref().patch;
         let version: String = format!("{}.{}p{}", major, minor, patch);
         Ok(version)
+    }
+
+    pub fn update_agents(&mut self) -> Result<(&Vec<Beacon>, &Vec<Session>)> { 
+        let execution_handle = self.runtime.handle();
+        let mut session_handle = self.session.clone();
+        let (beacons, sessions) = execution_handle.block_on(async { 
+            let beacons = session_handle.get_beacons(Request::new(commonpb::Empty {})).await;
+            let sessions = session_handle.get_sessions(Request::new(commonpb::Empty {})).await;
+            (beacons, sessions)
+        });
+        
+        let mut beacon_list = Vec::new();
+        let mut session_list = Vec::new();
+
+        for beacon in beacons?.into_inner().beacons { 
+            beacon_list.push(beacon);
+        }
+
+        for session in sessions?.into_inner().sessions { 
+            session_list.push(session);
+        }
+
+        self.sessions = session_list;
+        self.beacons = beacon_list;
+
+        Ok((&self.beacons, &self.sessions))
     }
 
     // Basic PoC to demonstrate getting values from config/session -> GUI

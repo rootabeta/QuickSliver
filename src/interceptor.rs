@@ -2,6 +2,7 @@ use tonic::metadata::MetadataValue;
 use tonic::service::Interceptor;
 use tonic::Request;
 
+#[derive(Clone)]
 pub struct TokenAuthInterceptor {
     token: String,
 }

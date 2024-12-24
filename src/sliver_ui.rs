@@ -32,6 +32,18 @@ impl Interface {
             if ui.button("Version test").clicked() {
                 self.version = self.session.get_version().unwrap_or("ERR".to_string());
             }
+
+            if ui.button("Update agents").clicked() { 
+                if let Ok((beacons, sessions)) = self.session.update_agents() { 
+                    for beacon in beacons {
+                        println!("Got beacon {:?}", beacon);
+                    }
+
+                    for session in sessions { 
+                        println!("Got session {:?}", session);
+                    }
+                }
+            }
         });
     }
 }
