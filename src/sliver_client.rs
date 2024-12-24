@@ -6,7 +6,7 @@ use serde::Deserialize;
 use std::fs;
 use std::path::PathBuf;
 use tokio::runtime::Runtime;
-use tonic::{Request, Response};
+use tonic::Request;
 use tonic::service::interceptor::InterceptedService;
 use tonic::transport::{Certificate, Channel, ClientTlsConfig, Identity};
 
